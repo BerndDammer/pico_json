@@ -1,14 +1,14 @@
 #include "loop.h"
+#include "StartupCheck.h"
 
-#include <stdio.h>
+//#include <stdio.h>
 #include "pico/stdlib.h"
-//#include "hardware/timer.h"
-//#include "hardware/watchdog.h"
-//#include "hardware/clocks.h"
+
 
 int main()
 {
     stdio_init_all();
+    startup_check();
     loop();
 
     return 0;
