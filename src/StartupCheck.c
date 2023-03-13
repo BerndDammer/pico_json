@@ -8,7 +8,6 @@
 
 #include "pico/stdlib.h"
 #include "pico/unique_id.h"
-//#include "pico/platform.h"
 #include "hardware/exception.h"
 #include "hardware/watchdog.h"
 
@@ -16,7 +15,8 @@
 
 #include "reset_fix_mem.h"
 
-
+#include "hardware/structs/vreg_and_chip_reset.h"
+#include "hardware/regs/vreg_and_chip_reset.h"
 
 void dumpBoardID(void)
 {
@@ -32,13 +32,6 @@ void dumpBoardID(void)
     printf("\n");
 }
 
-
-static void goodby(void)
-{
-    watchdog_reboot(0, 0, 2000);
-}
-
-
 exception_handler_t oldNmiException;
 exception_handler_t oldHardfaultException;
 exception_handler_t oldSvcallException;
@@ -48,39 +41,44 @@ exception_handler_t oldSystickException;
 // TODO: getting crash parameter
 static void myNmiException(void)
 {
-    sprintf( reset_buffer, "NMI\n");
-    goodby();
+    sprintf(reset_buffer, "NMI\n");
+    goodby_doit();
 }
 static void myHardfaultException(void)
 {
-    sprintf( reset_buffer, "Hardfault\n");
-    goodby();
+    sprintf(reset_buffer, "Hardfault\n");
+    goodby_doit();
 }
 static void mySvcallException(void)
 {
-    sprintf( reset_buffer, "Svcall\n");
-    goodby();
+    sprintf(reset_buffer, "Svcall\n");
+    goodby_doit();
 }
 static void myPendsvException(void)
 {
-    sprintf( reset_buffer, "Pendsv\n");
-    goodby();
+    sprintf(reset_buffer, "Pendsv\n");
+    goodby_doit();
 }
 // TODO: really patch this
 static void mySystickException(void)
 {
-    sprintf( reset_buffer, "Systick\n");
-    goodby();
+    sprintf(reset_buffer, "Systick\n");
+    goodby_doit();
 }
 
 void set_exceptions(void)
 {
-    oldNmiException = exception_set_exclusive_handler(NMI_EXCEPTION, myNmiException);
-    oldHardfaultException = exception_set_exclusive_handler(HARDFAULT_EXCEPTION, myHardfaultException);
-    oldSvcallException = exception_set_exclusive_handler(SVCALL_EXCEPTION, mySvcallException);
-    oldPendsvException = exception_set_exclusive_handler(PENDSV_EXCEPTION, myPendsvException);
+    oldNmiException = exception_set_exclusive_handler(NMI_EXCEPTION,
+            myNmiException);
+    oldHardfaultException = exception_set_exclusive_handler(HARDFAULT_EXCEPTION,
+            myHardfaultException);
+    oldSvcallException = exception_set_exclusive_handler(SVCALL_EXCEPTION,
+            mySvcallException);
+    oldPendsvException = exception_set_exclusive_handler(PENDSV_EXCEPTION,
+            myPendsvException);
     // TODO: really do this
-    oldSystickException = exception_set_exclusive_handler(SYSTICK_EXCEPTION, mySystickException);
+    oldSystickException = exception_set_exclusive_handler(SYSTICK_EXCEPTION,
+            mySystickException);
 }
 void checkWatchdog(void)
 {
@@ -92,16 +90,36 @@ void checkWatchdog(void)
 
 void startup_check(void)
 {
-    resetfix_counter++;
-    printf("----------------StartupCheck %i\n", resetfix_counter);
+    int mask = vreg_and_chip_reset_hw->chip_reset;
+    set_exceptions();
+    if ((mask & VREG_AND_CHIP_RESET_CHIP_RESET_HAD_POR_BITS)
+            && !goodby_ask_and_reset())
+    {
+        resetfix_counter = 0;
+        *reset_buffer = 0;
+    }
+    else
+    {
+        resetfix_counter++;
+    }
+    printf("---------------------------------Startup Check ||| Counter %i\n",
+            resetfix_counter);
+    // TODO: dump single bits
+    printf("VREG_AND_CHIP_RESET_CHIP_RESET %#10X\n", mask);
+}
 
-    sprintf( reset_buffer, "ResetFixCounter : %i\n", resetfix_counter);
+void startup_check_dump(void)
+{
+    printf("---Startup Check Info | Counter %i\n", resetfix_counter);
+
+    //sprintf( reset_buffer, "ResetFixCounter : %i\n", resetfix_counter);
 
     dumpBoardID();
     printf(" rp2040_chip_version : %i\n", rp2040_chip_version());
     printf(" rp2040_rom_version : %i\n", rp2040_rom_version());
     printf(" __get_current_exception : %i\n", __get_current_exception());
     checkWatchdog();
-    set_exceptions();
+    printf("VREG_AND_CHIP_RESET_CHIP_RESET %#10X\n",
+    vreg_and_chip_reset_hw->chip_reset);
 }
 

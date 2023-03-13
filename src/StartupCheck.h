@@ -11,6 +11,7 @@
 
 
 void startup_check(void);
+void startup_check_dump(void);
 
 
 #endif /* STARTUPCHECK_H_ */

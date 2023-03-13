@@ -9,13 +9,47 @@
 
 #include "pico/platform.h"
 
+// TODO: how to use macros
+static unsigned long __uninitialized_ram(resetfix_token);
 unsigned int __uninitialized_ram(resetfix_counter);
-
 char __uninitialized_ram( reset_buffer ) [1024];
 
-// TODO: how to use macros
+#include "hardware/regs/m0plus.h"
+#include "hardware/structs/scb.h"
+
+//                                                  1111222233334444
+const unsigned long GOODBY_TOKEN = (unsigned long)0x3AFF000144332211ul;
+
+        void goodby_doit(void)
+{
+    scb_hw->aircr = 0x05FA << 16 | 4; // arm M0(+) Manual
+    // this is seen as a power on reset
+    resetfix_token = GOODBY_TOKEN;
+}
+
+int goodby_ask_and_reset(void)
+{
+    int result;
+    result = resetfix_token == GOODBY_TOKEN;
+    resetfix_token = 0;
+    return result;
+}
+
+void force_nmi(void)
+{
+    scb_hw->icsr = M0PLUS_ICSR_NMIPENDSET_BITS;
+}
+
+void force_pendsv(void)
+{
+    scb_hw->icsr = M0PLUS_ICSR_PENDSVSET_BITS;
+}
+void force_systick(void)
+{
+    scb_hw->icsr = M0PLUS_ICSR_PENDSTSET_BITS;
+}
 /*
-int c;
-int *counter = &c;
-//static __uninitialized_ram(int counter) [1];
-*/
+ int c;
+ int *counter = &c;
+ //static __uninitialized_ram(int counter) [1];
+ */

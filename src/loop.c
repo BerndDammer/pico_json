@@ -9,16 +9,14 @@
 
 #include "reset_fix_mem.h"
 
-
-
 #include "loop.h"
 #include "jsontest.h"
 #include "memtool.h"
+#include "StartupCheck.h"
 
 #include "pico/malloc.h"
 
 #define CONSOLE_TIMEOUT 1000000
-
 
 void menu(void)
 {
@@ -27,7 +25,13 @@ void menu(void)
     printf("m memtool dump\n");
     printf("f show fix mem\n");
     printf("p cpp test\n");
+    printf("s show startup info\n");
+    printf("v read forbidden ram area\n");
+    printf("d division by zero\n");
     printf("w watchdog reboot after 3 sec\n");
+    printf("a PendSV\n");
+    printf("b Systick\n");
+    printf("n nmi\n");
     printf("space show menu\n");
     printf("------------------------------------\n");
 }
@@ -37,6 +41,7 @@ void doTheTest(void)
     test();
 }
 
+volatile int a, b, cc;
 void loop(void)
 {
     int counter = 0;
@@ -54,18 +59,41 @@ void loop(void)
         {
             switch (c)
             {
+            case 'b':
+                force_systick();
+                break;
+            case 'a':
+                force_pendsv();
+                break;
+            case 's':
+                startup_check_dump();
+                break;
             case 'f':
                 printf("resetfix_counter %i\n", resetfix_counter);
-                puts("********************************************************\n");
+                puts(
+                        "********************************************************\n");
                 puts(reset_buffer);
-                puts("********************************************************\n");
+                puts(
+                        "********************************************************\n");
                 break;
             case 'm':
                 dump_memory();
                 break;
+            case 'd':
+                a = 0;
+                b = 0;
+                cc = a / b;
+                break;
+            case 'v':
+                c = *(int*) 0x25042000;
+                *(int*) 0x27042000 = 0xFFFFAAAA;
+                break;
             case 'w':
                 puts(" ... 3 2 1 ... baem ....");
-                watchdog_reboot( 0, 0, 3000); // don't like pointer NULL
+                watchdog_reboot(0, 0, 3000); // don't like pointer NULL
+                break;
+            case 'n':
+                force_nmi();
                 break;
             case 'p':
                 doTheTest();
