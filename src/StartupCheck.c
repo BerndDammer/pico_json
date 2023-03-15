@@ -5,6 +5,8 @@
  *      Author: manni4
  */
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "pico/stdlib.h"
 #include "pico/unique_id.h"
@@ -12,6 +14,7 @@
 #include "hardware/watchdog.h"
 
 #include"StartupCheck.h"
+#include"jsontest.h"
 
 #include "reset_fix_mem.h"
 
@@ -49,17 +52,20 @@ static void myHardfaultException(void)
     sprintf(reset_buffer, "Hardfault\n");
     goodby_doit();
 }
+// TODO: used by FreeRTOS
 static void mySvcallException(void)
 {
     sprintf(reset_buffer, "Svcall\n");
     goodby_doit();
 }
+// TODO: used by FreeRTOS
 static void myPendsvException(void)
 {
     sprintf(reset_buffer, "Pendsv\n");
     goodby_doit();
 }
 // TODO: really patch this
+// TODO: used by FreeRTOS
 static void mySystickException(void)
 {
     sprintf(reset_buffer, "Systick\n");
@@ -88,15 +94,27 @@ void checkWatchdog(void)
 
 }
 
+////////////////////////////////////
+/// cpp uncatched throw calls _exit
+///
+void terminate_handler(void)
+{
+    strcpy(reset_buffer, "cpp terminate_handler\n");
+    goodby_doit();
+}
+
+
 void startup_check(void)
 {
     int mask = vreg_and_chip_reset_hw->chip_reset;
     set_exceptions();
+    set_terminate_handler(terminate_handler);
     if ((mask & VREG_AND_CHIP_RESET_CHIP_RESET_HAD_POR_BITS)
             && !goodby_ask_and_reset())
     {
         resetfix_counter = 0;
         *reset_buffer = 0;
+        strcpy(reset_buffer, "Cold Reset");
     }
     else
     {
@@ -122,4 +140,5 @@ void startup_check_dump(void)
     printf("VREG_AND_CHIP_RESET_CHIP_RESET %#10X\n",
     vreg_and_chip_reset_hw->chip_reset);
 }
+
 

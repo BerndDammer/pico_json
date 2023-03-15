@@ -10,7 +10,7 @@
 #include "pico/platform.h"
 
 // TODO: how to use macros
-static unsigned long __uninitialized_ram(resetfix_token);
+static unsigned long long __uninitialized_ram(resetfix_token);
 unsigned int __uninitialized_ram(resetfix_counter);
 char __uninitialized_ram( reset_buffer ) [1024];
 
@@ -18,13 +18,13 @@ char __uninitialized_ram( reset_buffer ) [1024];
 #include "hardware/structs/scb.h"
 
 //                                                  1111222233334444
-const unsigned long GOODBY_TOKEN = (unsigned long)0x3AFF000144332211ul;
+const unsigned long long GOODBY_TOKEN = (unsigned long long) 0x3AFF000144332211ull;
 
-        void goodby_doit(void)
+void goodby_doit(void)
 {
-    scb_hw->aircr = 0x05FA << 16 | 4; // arm M0(+) Manual
-    // this is seen as a power on reset
     resetfix_token = GOODBY_TOKEN;
+    // this is seen as a power on reset
+    scb_hw->aircr = 0x05FA << 16 | 4; // arm M0(+) Manual
 }
 
 int goodby_ask_and_reset(void)

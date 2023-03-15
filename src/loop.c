@@ -27,10 +27,12 @@ void menu(void)
     printf("p cpp test\n");
     printf("s show startup info\n");
     printf("v read forbidden ram area\n");
-    printf("d division by zero\n");
+    printf("z division by zero\n");
     printf("w watchdog reboot after 3 sec\n");
     printf("a PendSV\n");
     printf("b Systick\n");
+    printf("c cpp uncatched trow\n");
+    printf("d svc supervisor call\n");
     printf("n nmi\n");
     printf("space show menu\n");
     printf("------------------------------------\n");
@@ -59,11 +61,17 @@ void loop(void)
         {
             switch (c)
             {
+            case 'a':
+                force_pendsv();
+                break;
             case 'b':
                 force_systick();
                 break;
-            case 'a':
-                force_pendsv();
+            case 'c':
+                provocate_uncatched_throw();
+                break;
+            case 'd':
+                __asm(" SVC 0X00 ");
                 break;
             case 's':
                 startup_check_dump();
@@ -79,7 +87,7 @@ void loop(void)
             case 'm':
                 dump_memory();
                 break;
-            case 'd':
+            case 'z':
                 a = 0;
                 b = 0;
                 cc = a / b;

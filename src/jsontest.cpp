@@ -17,6 +17,8 @@
 #define PICOJSON_USE_INT64
 #include "picojson.h"
 
+#include <cstdlib>
+
 extern "C"
 {
 
@@ -68,4 +70,17 @@ void test(void)
 
     // cleanup ?????
 }
+void provocate_uncatched_throw(void)
+{
+    int a = 0;
+    if( a == 0)
+    {
+        throw ;
+    }
+}
+void set_terminate_handler( void(*my_terminate_handler)())
+{
+    std::set_terminate(my_terminate_handler);
+}
+
 }
