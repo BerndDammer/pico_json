@@ -21,6 +21,8 @@
 #include "hardware/structs/vreg_and_chip_reset.h"
 #include "hardware/regs/vreg_and_chip_reset.h"
 
+#include "hard_fault_decode.h"
+
 void dumpBoardID(void)
 {
 
@@ -47,11 +49,13 @@ static void myNmiException(void)
     sprintf(reset_buffer, "NMI\n");
     goodby_doit();
 }
+/*
 static void myHardfaultException(void)
 {
     sprintf(reset_buffer, "Hardfault\n");
     goodby_doit();
 }
+*/
 // TODO: used by FreeRTOS
 static void mySvcallException(void)
 {
@@ -77,7 +81,7 @@ void set_exceptions(void)
     oldNmiException = exception_set_exclusive_handler(NMI_EXCEPTION,
             myNmiException);
     oldHardfaultException = exception_set_exclusive_handler(HARDFAULT_EXCEPTION,
-            myHardfaultException);
+            (void (*)(void))myHardfaultException);
     oldSvcallException = exception_set_exclusive_handler(SVCALL_EXCEPTION,
             mySvcallException);
     oldPendsvException = exception_set_exclusive_handler(PENDSV_EXCEPTION,

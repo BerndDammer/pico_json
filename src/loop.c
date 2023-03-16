@@ -21,7 +21,9 @@
 void menu(void)
 {
     printf("------------------------------------\n");
+    printf("Generated: __TIME__ %s  __DATE__ %s\n", __TIME__, __DATE__);
     printf("press key to restart\n");
+    printf("1 read bad address\n");
     printf("m memtool dump\n");
     printf("f show fix mem\n");
     printf("p cpp test\n");
@@ -46,8 +48,8 @@ void doTheTest(void)
 volatile int a, b, cc;
 void loop(void)
 {
-    int counter = 0;
-    int c;
+    volatile int counter = 0;
+    volatile int c;
 
     for (;;)
     {
@@ -61,6 +63,9 @@ void loop(void)
         {
             switch (c)
             {
+            case '1':
+                c = *(volatile int*) 0xbadcafe0;
+                break;
             case 'a':
                 force_pendsv();
                 break;
@@ -78,11 +83,9 @@ void loop(void)
                 break;
             case 'f':
                 printf("resetfix_counter %i\n", resetfix_counter);
-                puts(
-                        "********************************************************\n");
+                puts("********************************************************\n");
                 puts(reset_buffer);
-                puts(
-                        "********************************************************\n");
+                puts("********************************************************\n");
                 break;
             case 'm':
                 dump_memory();
